@@ -6,15 +6,15 @@ __pycache__/
 *.py[cod]
 
 # Data: store sources and generated datasets outside Git
-data/raw/
-data/interim/
-data/processed/
+/data/raw/
+/data/interim/
+/data/processed/
 
 # Training outputs and model checkpoints
-models/
-runs/
-wandb/
-mlruns/
+/models/
+/runs/
+/wandb/
+/mlruns/
 *.ckpt
 *.pth
 *.pt
