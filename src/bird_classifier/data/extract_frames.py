@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import json
 import random
 import shutil
 import subprocess
@@ -14,6 +15,7 @@ from typing import Final
 
 VIDEO_EXTENSIONS: Final = {".avi", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".webm"}
 MANIFEST_FIELDS: Final = ("source_video", "timestamp_seconds", "output_image")
+DEFAULT_MIN_FRAME_GAP: Final = 15
 
 
 @dataclass(frozen=True)
@@ -33,39 +35,68 @@ def find_videos(input_dir: Path) -> list[Path]:
     )
 
 
-def video_duration_seconds(video_path: Path) -> float:
-    """Read a video's duration with ffprobe."""
+def video_metadata(video_path: Path) -> tuple[float, float]:
+    """Read a video's duration and average frames per second with one ffprobe call."""
     result = subprocess.run(
         [
             "ffprobe",
             "-v",
             "error",
+            "-select_streams",
+            "v:0",
             "-show_entries",
-            "format=duration",
+            "format=duration:stream=avg_frame_rate",
             "-of",
-            "default=noprint_wrappers=1:nokey=1",
+            "json",
             str(video_path),
         ],
         check=True,
         capture_output=True,
         text=True,
     )
-    duration = float(result.stdout.strip())
+    metadata = json.loads(result.stdout)
+    duration = float(metadata["format"]["duration"])
     if duration <= 0:
         raise ValueError(f"Video has no positive duration: {video_path}")
-    return duration
+    stream = metadata["streams"][0]
+    numerator, denominator = stream["avg_frame_rate"].split("/", maxsplit=1)
+    frame_rate = float(numerator) / float(denominator)
+    if frame_rate <= 0:
+        raise ValueError(f"Video has no positive frame rate: {video_path}")
+    return duration, frame_rate
 
 
-def random_timestamps(duration: float, count: int, seed: int, video_key: str) -> list[float]:
-    """Choose stable, distinct timestamps while avoiding the very start and end."""
+def random_frame_indices(
+    frame_count: int,
+    count: int,
+    min_frame_gap: int,
+    seed: int,
+    video_key: str,
+) -> list[int]:
+    """Choose stable random frame indices with at least ``min_frame_gap`` between them."""
+    if frame_count < 1:
+        return []
+    if count < 1:
+        raise ValueError("count must be at least 1")
+    if min_frame_gap < 1:
+        raise ValueError("min_frame_gap must be at least 1")
+
     digest = hashlib.sha256(f"{seed}:{video_key}".encode("utf-8")).digest()
     video_seed = int.from_bytes(digest[:8], byteorder="big")
     generator = random.Random(video_seed)
 
-    # Avoid metadata/title frames at the start and truncation at the end when possible.
-    margin = min(1.0, duration * 0.1)
-    start, end = margin, max(margin, duration - margin)
-    return sorted(generator.uniform(start, end) for _ in range(count))
+    # Avoid title frames and end-of-video truncation when there are enough frames.
+    margin = min(30, max(0, frame_count // 10))
+    first_frame, last_frame = margin, frame_count - margin - 1
+    usable_frames = last_frame - first_frame + 1
+    if usable_frames < 1:
+        first_frame, last_frame, usable_frames = 0, frame_count - 1, frame_count
+
+    # For short videos, return fewer frames rather than breaking the gap guarantee.
+    sample_count = min(count, 1 + (usable_frames - 1) // min_frame_gap)
+    compressed_length = usable_frames - (sample_count - 1) * (min_frame_gap - 1)
+    compressed_indices = sorted(generator.sample(range(compressed_length), sample_count))
+    return [first_frame + index + position * (min_frame_gap - 1) for position, index in enumerate(compressed_indices)]
 
 
 def output_path_for(video: Path, input_dir: Path, output_dir: Path, timestamp: float) -> Path:
@@ -101,13 +132,16 @@ def write_manifest(records: list[ExtractedFrame], manifest_path: Path) -> None:
 def extract_random_frames(
     input_dir: Path,
     output_dir: Path,
-    frames_per_video: int = 3,
+    frames_per_video: int = 8,
+    min_frame_gap: int = DEFAULT_MIN_FRAME_GAP,
     seed: int = 42,
     overwrite: bool = False,
 ) -> list[ExtractedFrame]:
     """Extract a reproducible random sample of frames from every supported video."""
     if frames_per_video < 1:
         raise ValueError("frames_per_video must be at least 1")
+    if min_frame_gap < 1:
+        raise ValueError("min_frame_gap must be at least 1")
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
         raise RuntimeError("ffmpeg and ffprobe must be installed and available on PATH")
     if not input_dir.is_dir():
@@ -117,8 +151,13 @@ def extract_random_frames(
     records: list[ExtractedFrame] = []
     for video in find_videos(input_dir):
         relative_video = video.relative_to(input_dir).as_posix()
-        duration = video_duration_seconds(video)
-        for timestamp in random_timestamps(duration, frames_per_video, seed, relative_video):
+        duration, frame_rate = video_metadata(video)
+        frame_count = max(1, round(duration * frame_rate))
+        frame_indices = random_frame_indices(
+            frame_count, frames_per_video, min_frame_gap, seed, relative_video
+        )
+        for frame_index in frame_indices:
+            timestamp = frame_index / frame_rate
             output_path = output_path_for(video, input_dir, output_dir, timestamp)
             if overwrite or not output_path.exists():
                 extract_frame(video, timestamp, output_path, overwrite)
