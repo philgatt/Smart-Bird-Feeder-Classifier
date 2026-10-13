@@ -1,4 +1,4 @@
-"""Extract three reproducible random frames from each raw video."""
+"""Extract well-spaced, reproducible random frames from each raw video."""
 
 from __future__ import annotations
 
@@ -25,7 +25,13 @@ def parse_args() -> argparse.Namespace:
         default=PROJECT_ROOT / "data" / "interim" / "candidate_images",
         help="Directory for extracted JPEGs and the frame manifest.",
     )
-    parser.add_argument("--frames-per-video", type=int, default=3)
+    parser.add_argument("--frames-per-video", type=int, default=8)
+    parser.add_argument(
+        "--min-frame-gap",
+        type=int,
+        default=15,
+        help="Minimum number of frames between selected frames (default: 15).",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--overwrite", action="store_true", help="Replace existing output files.")
     return parser.parse_args()
@@ -37,6 +43,7 @@ if __name__ == "__main__":
         input_dir=args.input_dir,
         output_dir=args.output_dir,
         frames_per_video=args.frames_per_video,
+        min_frame_gap=args.min_frame_gap,
         seed=args.seed,
         overwrite=args.overwrite,
     )

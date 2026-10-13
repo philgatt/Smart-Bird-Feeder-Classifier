@@ -4,11 +4,11 @@ import numpy as np
 import torch
 
 class BirdDataset(Dataset):
-    def __init__(self, images, labels):
+    def __init__(self, images, labels, train_std=None, train_mean=None):
         self.images = images
         self.labels = labels
-        # self.mean = 
-        # self.std = 
+        self.mean = train_std
+        self.std = train_mean
 
     def __len__(self):
         return len(self.images)
@@ -24,7 +24,9 @@ class BirdDataset(Dataset):
 
         image = torch.tensor(image, dtype=torch.float32)
         image = image.permute(2, 0, 1) # HWC to CHW
-        # image = (image - self.mean) / self.std 
+
+        if self.std != None and self.mean != None: 
+            image = (image - self.mean) / self.std 
 
         return image, label
 
