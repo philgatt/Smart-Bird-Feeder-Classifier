@@ -40,16 +40,18 @@ the preceding image.
 
 ## Sample video frames
 
-Place smart-camera videos in `data/raw/videos/`, then extract three reproducible
-random candidate frames from every video:
+Place smart-camera videos in `data/raw/videos/`, then extract eight reproducible,
+well-spaced candidate frames from every video:
 
 ```powershell
 python scripts/extract_random_frames.py
 ```
 
 The JPEGs and `frame_manifest.csv` are created in
-`data/interim/candidate_images/`. Use `--seed` to deliberately choose a different
-sample, and `--overwrite` only when replacing an existing sample.
+`data/interim/candidate_images/`. Selected frames are at least 15 frames apart; short
+videos yield fewer frames rather than violating that gap. Use `--frames-per-video` to
+choose a value such as 5-10, `--seed` to deliberately choose a different sample, and
+`--overwrite` only when replacing an existing sample.
 
 To label extracted video frames, run:
 
