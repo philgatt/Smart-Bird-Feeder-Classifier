@@ -8,9 +8,11 @@ import shutil
 from pathlib import Path
 from typing import Final
 import torch
-from data.dataloader import create_dataloader
+from bird_classifier.data.dataloader import BirdDataset, create_dataloader
 import pandas as pd
 import numpy as np
+import os
+import json
 
 
 IMAGE_EXTENSIONS: Final = {".jpg", ".jpeg", ".png", ".webp"}
@@ -79,8 +81,23 @@ def copy_unique_images(input_dir: Path, output_dir: Path, report_path: Path) -> 
                 }
             )
 
-def get_mean_std(dataset):
-    dataloader = create_dataloader(dataset)
+def get_mean_std(
+    dataset,
+    statistics_path=Path("data/processed/image_statistics.json"),
+    force_overwrite=False,
+):
+    statistics_path = Path(statistics_path)
+
+    if statistics_path.is_file() and not force_overwrite:
+        with statistics_path.open("r", encoding="utf-8") as file:
+            statistics = json.load(file)
+
+        mean = torch.tensor(statistics["mean"], dtype=torch.float32)
+        std = torch.tensor(statistics["std"], dtype=torch.float32)
+
+        return mean, std
+
+    dataloader = create_dataloader(dataset, batch_size=32, shuffle=False)
 
     pixel_sum = torch.zeros(3)
     pixel_squared_sum = torch.zeros(3)
@@ -92,12 +109,26 @@ def get_mean_std(dataset):
         pixel_count += images.shape[0] * images.shape[2] * images.shape[3]
 
     mean = pixel_sum / pixel_count
-    std = (pixel_squared_sum / pixel_count - mean**2).sqrt()
+    variance = (pixel_squared_sum / pixel_count - mean**2).clamp_min(0)
+    std = variance.sqrt()
+
+    statistics_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with statistics_path.open("w", encoding="utf-8") as file:
+        json.dump(
+            {
+                "mean": mean.tolist(),
+                "std": std.tolist(),
+            },
+            file,
+            indent=2,
+        )
 
     return mean, std
 
-def get_data_split(image_dir, labels_path, split):
-    labels = pd.read_csv(labels_path)
+def get_data_split(image_dir, labels_path, split) -> tuple[list[str], np.ndarray]:
+    """Get the image paths and encoded labels for the specified split."""
+    labels = pd.read_csv(labels_path) 
 
     split_data = labels.loc[labels["split"] == split]
 
