@@ -1,0 +1,176 @@
+{
+  "groups": [
+    {
+      "name": "weather",
+      "options": [
+        "The weather is dry and overcast.",
+        "It is lightly raining.",
+        "It has recently rained; the feeder and nearby surfaces are wet.",
+        "Keep the supplied background composition unchanged, but make the existing scene gently snowy, with snow only on existing surfaces and vegetation.",
+        "Keep the supplied background unchanged, with a light frost only on its existing visible surfaces.",
+        "The weather is windy, with subtle movement in loose vegetation.",
+        "A light drizzle is visible in the scene."
+      ]
+    },
+    {
+      "name": "time_of_day",
+      "options": [
+        "It is early morning, with soft cool natural light.",
+        "It is dawn just before sunrise, with very low cool-blue ambient light.",
+        "It is sunrise, with gentle warm early-morning light.",
+        "It is late morning under diffuse daylight.",
+        "It is midday, with brighter neutral daylight.",
+        "It is late afternoon, with low warm light.",
+        "It is dusk, with dim natural light.",
+        "It is late dusk, with the scene noticeably dark but the bird still visible to the feeder camera.",
+        "It is just after sunset, with low, muted ambient light and reduced colour detail.",
+        "It is blue hour, with cool, low-contrast ambient light."
+      ]
+    },
+    {
+      "name": "season_and_vegetation",
+      "options": [
+        "Preserve the supplied background layout and objects; render its existing vegetation in spring, with fresh pale-green leaves where foliage already exists.",
+        "Preserve the supplied background layout and objects; render its existing vegetation in summer, with denser green foliage only where vegetation already exists.",
+        "Preserve the supplied background layout and objects; render its existing vegetation in autumn, with muted brown, yellow, and orange foliage.",
+        "Preserve the supplied background layout and objects; render its existing vegetation as wintery, with subdued colours and bare branches only where branches already exist.",
+        "Keep the supplied vegetation and scene layout unchanged, but give the existing vegetation an evergreen winter appearance.",
+        "Keep the supplied background layout unchanged, with fallen leaves only on existing ground and feeder surfaces."
+      ]
+    },
+    {
+      "name": "visibility_and_atmosphere",
+      "options": [
+        "The air is clear and crisp, with a distinct distant background.",
+        "The air is foggy, with a soft haze in the background.",
+        "The scene is heavily foggy, with only the feeder and nearby bird remaining reasonably clear.",
+        "There is light morning mist behind the feeder.",
+        "A thin drifting fog softens the garden and distant objects.",
+        "The distant background is softly obscured by haze.",
+        "The scene has flat, low-contrast cloudy-day visibility."
+      ]
+    },
+    {
+      "name": "distant_background",
+      "options": [
+        "Keep the supplied distant background exactly where it is; make its existing house or building details softly visible in the distance.",
+        "Keep the supplied distant background exactly where it is; preserve any existing fence behind the feeder.",
+        "Keep the supplied distant background exactly where it is; preserve its existing hedge or vegetation shapes.",
+        "Keep the supplied distant background exactly where it is; preserve its existing tree trunks and branches.",
+        "Keep the supplied distant background layout unchanged, with the existing garden softly blurred by the fixed camera.",
+        "Keep the supplied distant background exactly where it is; preserve any existing shed or outbuilding in the distance.",
+        "Preserve all existing background objects from Image 1, including the white ball if it is present."
+      ]
+    },
+    {
+      "name": "feeder_and_perch_state",
+      "options": [
+        "The feeder has a light dusting of snow on its visible surfaces.",
+        "The feeder surfaces are damp with small rain droplets.",
+        "A few fallen leaves rest near the feeder or perch.",
+        "The feeder contains a natural-looking mix of seeds.",
+        "The perch is slightly weathered wood.",
+        "The feeder is clean and dry, with no unusual objects on it."
+      ]
+    },
+    {
+      "name": "feeder_composition_and_colour",
+      "options": [
+        "Keep the feeder in exactly the same position, scale, crop, construction, and colour as in Image 1.",
+        "Preserve the entire feeder and perch geometry from Image 1 without moving, replacing, recolouring, or redesigning it."
+      ]
+    },
+    {
+      "name": "light_and_exposure",
+      "options": [
+        "The scene is slightly underexposed, as from an automatic feeder camera.",
+        "The scene is dark and underexposed, as from a cheap feeder camera in low light; retain just enough detail to identify the bird.",
+        "The scene has dim pre-dawn lighting with visible sensor noise and weak contrast.",
+        "The scene is slightly overexposed in the brightest background areas.",
+        "The bird is softly backlit by natural outdoor light.",
+        "There are soft shadows from diffuse cloud cover.",
+        "The lighting is uneven, with a brighter background than foreground.",
+        "The colour temperature is slightly cool, as from an inexpensive outdoor camera."
+      ]
+    },
+    {
+      "name": "camera_angle_and_framing",
+      "options": [
+        "Preserve the exact fixed camera viewpoint, framing, and feeder position from Image 1.",
+        "Preserve the exact fixed-lens perspective and crop from Image 1; do not move the camera or recompose the scene."
+      ]
+    },
+    {
+      "name": "focus_and_motion",
+      "options": [
+        "The feeder camera is slightly out of focus, with mild softness.",
+        "There is subtle motion blur from a small bird movement.",
+        "The bird is reasonably sharp but the distant background is softly blurred.",
+        "The feeder is in focus while the nearest foreground is slightly soft.",
+        "The image has a small amount of lens softness at the edges."
+      ]
+    },
+    {
+      "name": "camera_artifacts",
+      "options": [
+        "The feeder camera image has visible compression artefacts and modest sensor noise.",
+        "The image has mild low-light noise in darker regions.",
+        "The image has slight JPEG compression and softened fine detail.",
+        "There is a faint water droplet or smudge near one edge of the lens, not covering the bird.",
+        "The feeder-camera lens is smeared or dirty, creating a soft hazy blur and faint streaking across parts of the whole frame, like moisture, grease, or dried residue on the protective lens; keep the scene composition unchanged.",
+        "The image has subtle fixed-camera colour fringing near high-contrast edges.",
+        "The camera has slightly reduced dynamic range, with limited shadow detail."
+      ]
+    },
+    {
+      "name": "bird_pose_action_and_framing",
+      "options": [
+        "The bird faces the camera directly at close range, with an enlarged head-and-face view as though it is curiously looking into a camera lens or door peephole; keep its anatomy and perspective realistic.",
+        "The bird is bowing its head down naturally to eat seeds from the feeder, with its beak close to the food.",
+        "The bird is leaning and bowing forward toward the camera to eat seeds in the near foreground, with its head lowered naturally and its body still plausibly balanced on the feeder.",
+        "The bird is pecking at a seed directly below the camera, creating a close downward-looking head-and-beak view.",
+        "The bird is eating from the seed tray, with its head lowered, beak touching a seed, and a natural feeding posture.",
+        "The bird has just picked up a seed and is raising its head slightly, with a tiny seed held naturally in its beak.",
+        "The bird is reaching forward to eat, with its breast and head closer to the camera than its body, while preserving realistic perspective.",
+        "The bird is taking off from the feeder, with wings partly or fully spread and subtle realistic motion blur.",
+        "The bird is launching away from the feeder toward the background, with strong but realistic motion blur concentrated on the moving wings while the feeder remains comparatively sharp.",
+        "The bird is flying away sideways from the feeder, with its wings mid-beat and moderate natural motion blur along the wing edges.",
+        "The bird has just pushed off from the perch, with its feet leaving the feeder and wings opening; use slight motion blur only on rapidly moving wing tips.",
+        "The bird is arriving at the feeder, with wings braking and partly blurred by rapid movement, while its head and body remain recognisably bird-like.",
+        "The bird is flying away from the feeder, viewed from behind or at a three-quarter rear angle, with its wings in a believable flight position.",
+        "The bird is extremely close to the fixed camera, so that only its belly, lower breast, legs, and a small part of its body are visible; do not force its face or distinctive wing markings into frame, and preserve believable close-range perspective.",
+        "The bird is very close to the camera, filling most of the frame with its head and upper body while retaining species-appropriate plumage and a natural lens perspective.",
+        "The bird is perched side-on in a clean full-body profile, with any distinctive visible wing markings naturally shown.",
+        "The bird is perched at a three-quarter angle, turning its head back toward the camera.",
+        "The bird is looking over one shoulder, with a natural alert posture and its head rotated away from its body direction.",
+        "The bird is looking straight upward, stretching its neck naturally while remaining perched.",
+        "The bird is looking downward from the perch, focused on seeds below it.",
+        "The bird has just landed on the feeder, with one foot settling onto the perch and wings nearly folded.",
+        "The bird is balancing on one foot, with the other foot slightly lifted in a natural perch stance.",
+        "The bird is leaning forward alertly, with its body low and head extended toward the camera.",
+        "The bird is standing upright in an alert, watchful pose, with its head clearly visible.",
+        "The bird is calmly resting on the feeder with slightly fluffed feathers, as in cool weather.",
+        "The bird is ruffling or settling its feathers, with a natural, slightly untidy plumage silhouette.",
+        "The bird is calling with its beak visibly open, keeping a plausible jaw opening and natural throat shape.",
+        "The bird has its beak closed and is making direct eye contact with the camera.",
+        "The bird is partially cropped at a frame edge as if it has moved close to the fixed feeder camera; a natural partial view is valid even when its face, legs, or distinctive wing markings are outside the frame.",
+        "The bird is viewed from slightly above, with its crown, back, and folded wing pattern naturally visible.",
+        "The bird is viewed from slightly below, with its breast and underside naturally visible while it remains perched above the camera.",
+        "The bird is facing away from the camera, showing its back and folded wings in a natural rear view.",
+        "The bird is cautiously peering from behind part of the feeder structure, without obscuring its head or key identifying plumage.",
+        "The bird is stretching one wing slightly while perched, revealing species-appropriate wing feathers without making the bird look anatomically distorted."
+      ]
+    },
+    {
+      "name": "minor_scene_detail",
+      "options": [
+        "A thin twig appears near the edge of the frame without blocking the bird.",
+        "A few small seed husks are visible on the feeder surface.",
+        "A soft shadow falls across a small part of the feeder.",
+        "There are a few tiny rain droplets on the feeder, not on the bird's face.",
+        "A distant branch creates a soft, natural background shape.",
+        "The scene contains no other birds, animals, people, or artificial labels."
+      ]
+    }
+  ]
+}
