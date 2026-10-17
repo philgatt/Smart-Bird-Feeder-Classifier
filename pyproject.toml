@@ -9,6 +9,7 @@ description = "Dataset preparation and training for a bird image classifier"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "opencv-python>=4.10",
     "pillow>=10",
     "scikit-learn>=1.5",
 ]
