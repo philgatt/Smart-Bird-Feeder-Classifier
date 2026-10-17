@@ -15,6 +15,10 @@ The current classifier is trained exclusively on synthetic images generated with
 Generation prompts are randomized for every sample to create distinct variations
 in pose, framing, lighting, weather, and camera artefacts.
 
+No real test images were used as inputs or references during synthetic-data
+generation. The held-out real test set remains separate from the synthetic training
+pipeline.
+
 Many general bird-image datasets contain clean, well-composed wildlife photographs.
 In contrast, fixed bird-feeder cameras produce a much less controlled visual domain:
 nearby birds can appear disproportionately large because of the lens, the lens can be
