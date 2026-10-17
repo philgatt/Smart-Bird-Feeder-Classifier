@@ -97,11 +97,14 @@ empty-feeder (`No Bird`) examples.
 
 ## Achieved metrics
 
-On the current held-out real bird-frame set (200 images across nine bird species),
-the synthetic-only ConvNeXt-Tiny model achieved **79.0% accuracy**. The corresponding
-synthetic-only MobileNetV3-Large model achieved **68.0% accuracy**. The real test set
-does not currently contain labelled `No Bird` frames, so that class is not included in
-these real-world accuracy values.
+| Model | Real-world accuracy | Inference time |
+| --- | --- | --- |
+| ConvNeXt-Tiny |  |  |
+| MobileNetV3-Large |  |  |
+
+The comparison will be populated after the evaluation and inference benchmarks are
+finalised. The real test set does not currently contain labelled `No Bird` frames, so
+that class is not included in real-world bird-species accuracy.
 
 These results are a proof of concept, not a claim of broad real-world generalisation.
 The training data is still intentionally biased toward the feeder, viewpoint, and
