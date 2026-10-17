@@ -90,10 +90,10 @@ empty-feeder (`No Bird`) examples.
 
 | Class | Synthetic generation | Real feeder-camera frame |
 | --- | --- | --- |
-| European robin (`Rotkehlchen`) | ![Synthetic European robin](docs/images/synthetic-vs-real/synthetic-robin.png) | ![Real European robin](docs/images/synthetic-vs-real/real-robin.jpg) |
-| Eurasian jay (`Eichelhäher`) | ![Synthetic Eurasian jay](docs/images/synthetic-vs-real/synthetic-eurasian-jay.png) | ![Real Eurasian jay](docs/images/synthetic-vs-real/real-eurasian-jay.jpg) |
-| Common wood pigeon (`Taube`) | ![Synthetic common wood pigeon](docs/images/synthetic-vs-real/synthetic-wood-pigeon.png) | ![Real common wood pigeon](docs/images/synthetic-vs-real/real-wood-pigeon.jpg) |
-| No bird | ![Synthetic empty feeder](docs/images/synthetic-vs-real/synthetic-no-bird.png) | No real empty-frame labels are included in the current evaluation set. |
+| European robin (`Rotkehlchen`) | <img src="docs/images/synthetic-vs-real/synthetic-robin.png" alt="Synthetic European robin" width="320"> | <img src="docs/images/synthetic-vs-real/real-robin.jpg" alt="Real European robin" width="320"> |
+| Eurasian jay (`Eichelhäher`) | <img src="docs/images/synthetic-vs-real/synthetic-eurasian-jay.png" alt="Synthetic Eurasian jay" width="320"> | <img src="docs/images/synthetic-vs-real/real-eurasian-jay.jpg" alt="Real Eurasian jay" width="320"> |
+| Common wood pigeon (`Taube`) | <img src="docs/images/synthetic-vs-real/synthetic-wood-pigeon.png" alt="Synthetic common wood pigeon" width="320"> | <img src="docs/images/synthetic-vs-real/real-wood-pigeon.jpg" alt="Real common wood pigeon" width="320"> |
+| No bird | <img src="docs/images/synthetic-vs-real/synthetic-no-bird.png" alt="Synthetic empty feeder" width="320"> | No real empty-frame labels are included in the current evaluation set. |
 
 ## Achieved metrics
 
