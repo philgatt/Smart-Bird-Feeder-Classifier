@@ -59,6 +59,60 @@ To label extracted video frames, run:
 python scripts/label_images.py --image-root data/interim/candidate_images --labels-csv data/raw/labels/video_frame_labels.csv
 ```
 
+## Synthetic training data
+
+The current classifier is trained exclusively on synthetic images generated with
+[FLUX.2 Klein 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8).
+Generation prompts are randomized for every sample to create distinct variations
+in pose, framing, lighting, weather, and camera artefacts.
+
+Many general bird-image datasets contain clean, well-composed wildlife photographs.
+In contrast, fixed bird-feeder cameras produce a much less controlled visual domain:
+nearby birds can appear disproportionately large because of the lens, the lens can be
+obscured by rain, dirt, or smears, and birds may be partly cropped, viewed from behind,
+or captured in otherwise atypical poses. The synthetic generation workflow is designed
+to represent these conditions during training.
+
+When collecting a non-synthetic dataset from the same bird-feeder camera intended for
+deployment, it quickly became clear that some species visit only rarely and therefore
+have very small real-world sample sizes. This makes synthetic generation particularly
+valuable for balancing the training data. It also provides a practical expansion path:
+new species can be added to the classifier and the model retrained without first
+collecting a large set of real photographs. Synthetic generation also makes it
+possible to deliberately include rare but important conditions, such as late-night
+visits when the camera activates night mode, severe weather, fog, or a dirty lens.
+
+### Synthetic and real feeder-camera examples
+
+The examples below illustrate the target domain: imperfect fixed-camera frames,
+rather than clean wildlife photography. The synthetic set includes both bird and
+empty-feeder (`No Bird`) examples.
+
+| Class | Synthetic generation | Real feeder-camera frame |
+| --- | --- | --- |
+| European robin (`Rotkehlchen`) | ![Synthetic European robin](docs/images/synthetic-vs-real/synthetic-robin.png) | ![Real European robin](docs/images/synthetic-vs-real/real-robin.jpg) |
+| Eurasian jay (`Eichelhäher`) | ![Synthetic Eurasian jay](docs/images/synthetic-vs-real/synthetic-eurasian-jay.png) | ![Real Eurasian jay](docs/images/synthetic-vs-real/real-eurasian-jay.jpg) |
+| Common wood pigeon (`Taube`) | ![Synthetic common wood pigeon](docs/images/synthetic-vs-real/synthetic-wood-pigeon.png) | ![Real common wood pigeon](docs/images/synthetic-vs-real/real-wood-pigeon.jpg) |
+| No bird | ![Synthetic empty feeder](docs/images/synthetic-vs-real/synthetic-no-bird.png) | No real empty-frame labels are included in the current evaluation set. |
+
+## Achieved metrics
+
+On the current held-out real bird-frame set (200 images across nine bird species),
+the synthetic-only ConvNeXt-Tiny model achieved **79.0% accuracy**. The corresponding
+synthetic-only MobileNetV3-Large model achieved **68.0% accuracy**. The real test set
+does not currently contain labelled `No Bird` frames, so that class is not included in
+these real-world accuracy values.
+
+These results are a proof of concept, not a claim of broad real-world generalisation.
+The training data is still intentionally biased toward the feeder, viewpoint, and
+surrounding environment in which deployment is planned; this should provide the best
+accuracy for that specific scenario. The synthetic workflow can, however, be adjusted
+to use more varied backgrounds and camera placements when the aim is to generalise to
+other feeders or locations.
+
 ## Status
 
-Project initialization. Dataset provenance, label policy, split strategy, and baseline training configuration are still to be defined.
+The project includes dataset preparation, synthetic-data generation workflows, model
+training experiments, and a local video-inference GUI. Further work should expand the
+real-world test set, particularly with labelled empty-feeder frames and additional
+deployment locations.

@@ -1,6 +1,19 @@
 {
   "groups": [
     {
+      "name": "global_scene_condition",
+      "options": [
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into a snowy winter morning with snow on existing surfaces, wintery existing vegetation, cold diffuse daylight, and low-quality feeder-camera detail.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into a wet overcast rainy day with rain on existing surfaces, muted colours, damp reflections, and dim diffuse light.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into a heavily foggy morning with low contrast and distant existing objects naturally obscured by haze.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into dark blue hour with cool weak ambient light, reduced colour detail, and realistic low-light sensor noise.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into a warm sunrise with soft golden early-morning light and realistic bright highlights.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the same scene into a bright summer midday with stronger natural contrast, warm daylight, and modest highlight clipping from the cheap camera.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but transform the existing vegetation into muted autumn colours with a cool cloudy afternoon light.",
+        "Apply this as a strong global edit to Image 1: keep the exact feeder, camera viewpoint, framing, background layout, and existing objects, but make the lens lightly smeared with moisture or dried residue, causing hazy softness and faint streaking across parts of the fixed-camera frame."
+      ]
+    },
+    {
       "name": "weather",
       "options": [
         "The weather is dry and overcast.",
