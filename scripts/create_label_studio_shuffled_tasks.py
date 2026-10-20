@@ -10,6 +10,7 @@ import argparse
 import json
 import random
 from pathlib import Path
+from urllib.parse import quote
 
 DEFAULT_IMAGE_DIRECTORY = Path("F:/video vogel")
 DEFAULT_LOCAL_FILES_PATH = "video vogel"
@@ -50,10 +51,13 @@ def main() -> None:
     ]
     random.Random(arguments.seed).shuffle(images)
     local_files_path = arguments.local_files_path.strip("/\\")
-    tasks = [
-        {"data": {"image": f"/data/local-files/?d={local_files_path}/{image_name}"}}
-        for image_name in images
-    ]
+    tasks = []
+    for image_name in images:
+        # ``+`` is otherwise interpreted as a space in a query parameter. This
+        # matters for camera filenames such as ``...+01-00.jpg``. Quote every
+        # special character while retaining folder separators in the path.
+        relative_path = quote(f"{local_files_path}/{image_name}", safe="/")
+        tasks.append({"data": {"image": f"/data/local-files/?d={relative_path}"}})
     with output_path.open("w", encoding="utf-8") as handle:
         json.dump(tasks, handle, indent=2)
     print(f"Generated {len(tasks):,} randomly ordered Label Studio tasks: {output_path}")
