@@ -1,4 +1,4 @@
-"""Create detection charts from analyse_media_folder.py JSON output.
+"""Create detection charts from batch_predict_media_folder.py JSON output.
 
 Example
 -------
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("report", type=Path, help="JSON report created by analyse_media_folder.py.")
+    parser.add_argument("report", type=Path, help="JSON report created by batch_predict_media_folder.py.")
     parser.add_argument(
         "--output-dir", type=Path, help="Directory for PNG charts (defaults beside the report)."
     )

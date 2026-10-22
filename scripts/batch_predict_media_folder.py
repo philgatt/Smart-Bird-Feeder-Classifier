@@ -2,8 +2,8 @@
 
 Examples
 --------
-python scripts/analyse_media_folder.py F:/BirdCamera/recordings
-python scripts/analyse_media_folder.py F:/BirdCamera/recordings --recursive --model model.pt
+python scripts/batch_predict_media_folder.py F:/BirdCamera/recordings
+python scripts/batch_predict_media_folder.py F:/BirdCamera/recordings --recursive --model model.pt
 """
 
 from __future__ import annotations
