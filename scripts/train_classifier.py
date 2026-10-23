@@ -1,17 +1,22 @@
 """Train a ConvNeXt-Tiny or MobileNetV3-Large bird-camera classifier.
 
-The script reserves 20% of each real class as an untouched final test set. It can
-use synthetic, real, or combined training data and applies early stopping.
+The script reserves 20% of each core real class as an untouched final test set.
+For the extended class set, core classes train on real images only, while the
+three rare classes train on synthetic images only and every corresponding real
+image is held out for final testing.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import random
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -39,6 +44,8 @@ from bird_classifier.models.mobilenet_v3_large import (  # noqa: E402
 SYNTHETIC_ROOT = PROJECT_ROOT / "data" / "raw" / "images" / "labeled" / "synthetic"
 REAL_ROOT = PROJECT_ROOT / "data" / "raw" / "images" / "labeled" / "real"
 TORCH_CACHE_ROOT = PROJECT_ROOT / "models" / "torch_cache"
+RESIZED_IMAGE_CACHE_ROOT = PROJECT_ROOT / "data" / "interim" / "training_image_cache_224"
+RESIZED_IMAGE_CACHE_MARKER = RESIZED_IMAGE_CACHE_ROOT / ".complete"
 
 # The core deployment classifier uses well-covered classes.  The extended set
 # adds the three species with useful synthetic sets but comparatively little
@@ -56,7 +63,28 @@ CORE_CLASS_NAMES = (
     "Tannenmeise",
     "Taube",
 )
-EXTENDED_ONLY_CLASS_NAMES = ("Amsel", "Erlenzeisig", "Gruenfink")
+EXTENDED_ONLY_CLASS_NAMES = ("Amsel", "Gruenfink", "Stieglitz")
+ALL_REAL_CLASS_NAMES = (
+    "Amsel",
+    "Bergfink",
+    "Blaumeise",
+    "Buchfink",
+    "Eichelhäher",
+    "Erlenzeisig",
+    "Feldsperling",
+    "Gimpel",
+    "Gruenfink",
+    "Heckenbraunelle",
+    "Kleiber",
+    "Kohlmeise",
+    "No Bird",
+    "Rotkehlchen",
+    "Specht",
+    "Stieglitz",
+    "Sumpfmeise",
+    "Tannenmeise",
+    "Taube",
+)
 CLASS_NAMES = CORE_CLASS_NAMES
 TRAINING_DATA_MODE = "combined"
 ARCHITECTURE = "convnext-tiny"
@@ -69,7 +97,14 @@ VALIDATION_FRACTION = 0.20
 IMAGE_SIZE = 224
 EPOCHS = int(os.environ.get("BIRD_COMBINED_EPOCHS", "30"))
 BATCH_SIZE = int(os.environ.get("BIRD_COMBINED_BATCH_SIZE", "32"))
-NUM_WORKERS = int(os.environ.get("BIRD_COMBINED_NUM_WORKERS", "4"))
+# On Windows, spawned loader workers can stall while opening camera images.
+# The reusable 224px cache makes an in-process loader fast and reliable.
+NUM_WORKERS = int(os.environ.get("BIRD_COMBINED_NUM_WORKERS", "0"))
+CACHE_RESIZED_IMAGES = os.environ.get("BIRD_CACHE_RESIZED_IMAGES", "true").lower() not in {
+    "0",
+    "false",
+    "no",
+}
 FREEZE_BACKBONE_EPOCHS = 5
 EARLY_STOPPING_PATIENCE = 6
 EARLY_STOPPING_MIN_DELTA = 0.002
@@ -128,12 +163,73 @@ def split_by_class(
     return first, second
 
 
+def split_real_samples_for_experiment(
+    samples: list[Sample],
+    synthetic_only_labels: set[int],
+    fraction: float,
+    generator: random.Random,
+) -> tuple[list[Sample], list[Sample]]:
+    """Reserve all real images for classes trained only from synthetic data."""
+    training, test = [], []
+    for label in range(len(CLASS_NAMES)):
+        class_samples = [sample for sample in samples if sample.label == label]
+        generator.shuffle(class_samples)
+        if label in synthetic_only_labels:
+            test.extend(class_samples)
+            continue
+        test_count = max(1, round(len(class_samples) * fraction))
+        test.extend(class_samples[:test_count])
+        training.extend(class_samples[test_count:])
+    return training, test
+
+
 def count_by_class(samples: list[Sample]) -> dict[str, int]:
     return {class_name: sum(sample.label == label for sample in samples) for label, class_name in enumerate(CLASS_NAMES)}
 
 
 def count_by_source(samples: list[Sample]) -> dict[str, int]:
     return {source: sum(sample.source == source for sample in samples) for source in ("synthetic", "real")}
+
+
+def cache_resized_samples(samples: list[Sample]) -> list[Sample]:
+    """Cache 224px RGB images once so each epoch avoids full-frame JPEG decoding."""
+    RESIZED_IMAGE_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
+
+    def cached_path(sample: Sample) -> Path:
+        fingerprint = hashlib.sha1(str(sample.path).encode("utf-8")).hexdigest()
+        return RESIZED_IMAGE_CACHE_ROOT / f"{sample.source}_{sample.label}_{fingerprint}.jpg"
+
+    cache_signature = hashlib.sha1(
+        "\n".join(str(sample.path) for sample in samples).encode("utf-8")
+    ).hexdigest()
+    if (
+        RESIZED_IMAGE_CACHE_MARKER.exists()
+        and RESIZED_IMAGE_CACHE_MARKER.read_text(encoding="utf-8").strip() == cache_signature
+    ):
+        return [Sample(cached_path(sample), sample.label, sample.source) for sample in samples]
+
+    def build_cache_item(sample: Sample) -> None:
+        target = cached_path(sample)
+        if target.exists():
+            return
+        with Image.open(sample.path) as image:
+            image.convert("RGB").resize(
+                (IMAGE_SIZE, IMAGE_SIZE), Image.Resampling.BILINEAR
+            ).save(target, format="JPEG", quality=92)
+
+    print(
+        f"Preparing or extending the 224px image cache for {len(samples)} images.",
+        flush=True,
+    )
+    # Cache generation is a one-time I/O task. Keep it parallel even though
+    # training itself uses zero Windows DataLoader workers for reliability.
+    workers = min(8, os.cpu_count() or 1)
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        for index, _ in enumerate(executor.map(build_cache_item, samples), start=1):
+            if index % 250 == 0 or index == len(samples):
+                print(f"Image cache: {index}/{len(samples)}", flush=True)
+    RESIZED_IMAGE_CACHE_MARKER.write_text(f"{cache_signature}\n", encoding="utf-8")
+    return [Sample(cached_path(sample), sample.label, sample.source) for sample in samples]
 
 
 def make_transforms() -> tuple[transforms.Compose, transforms.Compose]:
@@ -239,7 +335,10 @@ def parse_arguments() -> argparse.Namespace:
         "--data-source",
         choices=("synthetic", "real", "combined"),
         default=legacy_mode,
-        help="Images to use for training; the same held-out real test split is always retained.",
+        help=(
+            "Training data for the core class set. The extended class set always uses "
+            "real core classes and synthetic-only rare classes."
+        ),
     )
     parser.add_argument(
         "--architecture",
@@ -251,12 +350,35 @@ def parse_arguments() -> argparse.Namespace:
         "--class-set",
         choices=("core", "extended"),
         default="core",
-        help="Core classes, or core plus Amsel, Erlenzeisig, and Gruenfink.",
+        help="Core classes, or core plus Amsel, Gruenfink, and Stieglitz.",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         help="Optional directory for checkpoints and reports.",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=EPOCHS,
+        help=f"Maximum training epochs (default: {EPOCHS}).",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=BATCH_SIZE,
+        help=f"Images per training batch (default: {BATCH_SIZE}).",
+    )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=NUM_WORKERS,
+        help=f"Data-loader worker processes; use 0 on Windows for reliability (default: {NUM_WORKERS}).",
+    )
+    parser.add_argument(
+        "--no-image-cache",
+        action="store_true",
+        help="Do not use the reusable 224px image cache.",
     )
     return parser.parse_args()
 
@@ -270,15 +392,31 @@ def default_output_root(data_source: str, architecture: str, class_set: str) -> 
 
 
 def main() -> None:
-    global ARCHITECTURE, CLASS_NAMES, OUTPUT_ROOT, TRAINING_DATA_MODE
+    global ARCHITECTURE, BATCH_SIZE, CACHE_RESIZED_IMAGES, CLASS_NAMES, EPOCHS, NUM_WORKERS, OUTPUT_ROOT, TRAINING_DATA_MODE
     args = parse_arguments()
     TRAINING_DATA_MODE = args.data_source
     ARCHITECTURE = args.architecture
+    if args.epochs < 1:
+        raise ValueError("--epochs must be at least 1.")
+    if args.batch_size < 1:
+        raise ValueError("--batch-size must be at least 1.")
+    if args.num_workers < 0:
+        raise ValueError("--num-workers cannot be negative.")
+    EPOCHS = args.epochs
+    BATCH_SIZE = args.batch_size
+    NUM_WORKERS = args.num_workers
+    CACHE_RESIZED_IMAGES = not args.no_image_cache
     CLASS_NAMES = (
         CORE_CLASS_NAMES
         if args.class_set == "core"
         else CORE_CLASS_NAMES + EXTENDED_ONLY_CLASS_NAMES
     )
+    synthetic_only_class_names = (
+        EXTENDED_ONLY_CLASS_NAMES if args.class_set == "extended" else ()
+    )
+    synthetic_only_labels = {
+        CLASS_NAMES.index(class_name) for class_name in synthetic_only_class_names
+    }
     OUTPUT_ROOT = args.output_dir or default_output_root(
         TRAINING_DATA_MODE, ARCHITECTURE, args.class_set
     )
@@ -289,20 +427,42 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if device.type != "cuda":
         raise RuntimeError("This training run requires CUDA.")
+    # Input dimensions are fixed at 224x224, so cuDNN can safely select its
+    # fastest convolution kernels once and reuse them for every batch.
+    torch.backends.cudnn.benchmark = True
+    torch.set_float32_matmul_precision("high")
 
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     TORCH_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
     torch.hub.set_dir(str(TORCH_CACHE_ROOT))
     generator = random.Random(SEED)
     real_samples = collect_samples(REAL_ROOT, "real")
-    real_training_pool, real_test_samples = split_by_class(real_samples, REAL_TEST_FRACTION, generator)
-    if TRAINING_DATA_MODE == "combined":
+    real_training_pool, real_test_samples = split_real_samples_for_experiment(
+        real_samples,
+        synthetic_only_labels,
+        REAL_TEST_FRACTION,
+        generator,
+    )
+    if args.class_set == "extended":
+        synthetic_samples = collect_samples(SYNTHETIC_ROOT, "synthetic")
+        synthetic_rare_samples = [
+            sample for sample in synthetic_samples if sample.label in synthetic_only_labels
+        ]
+        training_pool = real_training_pool + synthetic_rare_samples
+        TRAINING_DATA_MODE = "hybrid-real-core-synthetic-rare"
+    elif TRAINING_DATA_MODE == "combined":
         training_pool = collect_samples(SYNTHETIC_ROOT, "synthetic") + real_training_pool
     elif TRAINING_DATA_MODE == "real":
         training_pool = real_training_pool
     else:
         training_pool = collect_samples(SYNTHETIC_ROOT, "synthetic")
     training_samples, validation_samples = split_by_class(training_pool, VALIDATION_FRACTION, generator)
+    if CACHE_RESIZED_IMAGES:
+        all_samples = training_samples + validation_samples + real_test_samples
+        cached = cache_resized_samples(all_samples)
+        training_samples = cached[: len(training_samples)]
+        validation_samples = cached[len(training_samples) : len(training_samples) + len(validation_samples)]
+        real_test_samples = cached[len(training_samples) + len(validation_samples) :]
     train_transform, evaluation_transform = make_transforms()
 
     loader_options = {
@@ -311,6 +471,8 @@ def main() -> None:
         "num_workers": NUM_WORKERS,
         "persistent_workers": NUM_WORKERS > 0,
     }
+    if NUM_WORKERS > 0:
+        loader_options["prefetch_factor"] = 4
     train_loader = DataLoader(BirdDataset(training_samples, train_transform), shuffle=True, **loader_options)
     validation_loader = DataLoader(BirdDataset(validation_samples, evaluation_transform), **loader_options)
     test_loader = DataLoader(BirdDataset(real_test_samples, evaluation_transform), **loader_options)
@@ -325,12 +487,18 @@ def main() -> None:
     loss_function = nn.CrossEntropyLoss(weight=class_weights(training_samples, device))
     optimizer = torch.optim.AdamW((parameter for parameter in model.parameters() if parameter.requires_grad), lr=3e-4, weight_decay=1e-4)
     scaler = torch.amp.GradScaler("cuda")
+    print(
+        f"Training on {torch.cuda.get_device_name(device)} | "
+        f"batch size {BATCH_SIZE} | data-loader workers {NUM_WORKERS}",
+        flush=True,
+    )
     best_path = OUTPUT_ROOT / "best_validation_model.pt"
     best_loss, best_epoch, stale_epochs = float("inf"), 0, 0
     train_losses: list[float] = []
     validation_losses: list[float] = []
 
     for epoch in range(EPOCHS):
+        epoch_started = time.perf_counter()
         if epoch == FREEZE_BACKBONE_EPOCHS:
             unfreeze_backbone(model)
             optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-4)
@@ -351,7 +519,13 @@ def main() -> None:
         validation_loss, validation_metrics, _ = evaluate(model, validation_loader, validation_samples, loss_function, device)
         train_losses.append(train_loss)
         validation_losses.append(validation_loss)
-        print(f"Epoch {epoch + 1:02d}/{EPOCHS} | train loss: {train_loss:.4f} | validation loss: {validation_loss:.4f} | validation accuracy: {validation_metrics['accuracy']:.3f}")
+        print(
+            f"Epoch {epoch + 1:02d}/{EPOCHS} | train loss: {train_loss:.4f} | "
+            f"validation loss: {validation_loss:.4f} | "
+            f"validation accuracy: {validation_metrics['accuracy']:.3f} | "
+            f"time: {time.perf_counter() - epoch_started:.1f}s",
+            flush=True,
+        )
         if validation_loss < best_loss - EARLY_STOPPING_MIN_DELTA:
             best_loss, best_epoch, stale_epochs = validation_loss, epoch + 1, 0
             torch.save({"architecture": ARCHITECTURE, "epoch": best_epoch, "validation_loss": best_loss, "model_state_dict": model.state_dict()}, best_path)
@@ -372,7 +546,12 @@ def main() -> None:
         "class_names": CLASS_NAMES,
         "seed": SEED,
         "device": str(device),
-        "excluded_real_only_classes": ["Amsel", "Buchfink", "Erlenzeisig", "Gimpel", "Gruenfink", "Heckenbraunelle", "Stieglitz"],
+        "excluded_real_classes": sorted(set(ALL_REAL_CLASS_NAMES).difference(CLASS_NAMES)),
+        "synthetic_only_training_classes": list(synthetic_only_class_names),
+        "real_test_policy": {
+            "core_classes": f"{REAL_TEST_FRACTION:.0%} class-balanced held-out split",
+            "synthetic_only_classes": "all labelled real images held out",
+        },
         "splits": {
             "training": {"total": len(training_samples), "by_class": count_by_class(training_samples), "by_source": count_by_source(training_samples)},
             "validation": {"total": len(validation_samples), "by_class": count_by_class(validation_samples), "by_source": count_by_source(validation_samples)},
@@ -389,7 +568,7 @@ def main() -> None:
         writer = csv.DictWriter(handle, fieldnames=prediction_rows[0].keys())
         writer.writeheader()
         writer.writerows(prediction_rows)
-    torch.save({"architecture": ARCHITECTURE, "model_state_dict": model.state_dict(), "class_names": CLASS_NAMES, "training_data": TRAINING_DATA_MODE, "class_set": args.class_set, "held_out_real_test_fraction": REAL_TEST_FRACTION}, OUTPUT_ROOT / "model.pt")
+    torch.save({"architecture": ARCHITECTURE, "model_state_dict": model.state_dict(), "class_names": CLASS_NAMES, "training_data": TRAINING_DATA_MODE, "class_set": args.class_set, "held_out_real_test_fraction": REAL_TEST_FRACTION, "synthetic_only_training_classes": list(synthetic_only_class_names)}, OUTPUT_ROOT / "model.pt")
     print(json.dumps(report, indent=2))
 
 
