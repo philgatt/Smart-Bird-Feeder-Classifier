@@ -34,10 +34,22 @@ images**, so their scores are directly comparable.
 | **Real-only ConvNeXt-Tiny** | Real images | **94.8%** | Best checkpoint for the established 11 classes. |
 | Combined ConvNeXt-Tiny | Real and synthetic images | 93.4% | Synthetic augmentation did not improve the well-covered classes. |
 | Synthetic-only ConvNeXt-Tiny | Synthetic images | 60.1% | Useful for rare-class extension, but not a replacement for real images. |
-| Extended ConvNeXt-Tiny | Real core classes; synthetic Amsel, Grünfink, and Stieglitz | No single reliable score yet | Those rare classes have only 7, 30, and 5 real test images. |
+| Extended ConvNeXt-Tiny | Real core classes; synthetic common blackbird, European greenfinch, and European goldfinch | No single reliable score yet | Those rare classes have only 7, 30, and 5 real test images. |
 
 Synthetic data is used primarily to add rare species. No held-out real test image was
 used to generate the synthetic training data.
+
+### Example predictions
+
+These are four correctly classified images from the held-out real test set. Certainty
+is the model's probability for its predicted class.
+
+| Test image | Prediction | Certainty |
+| --- | --- | --- |
+| <img src="docs/images/test-predictions/blue-tit.jpg" alt="Real test image of a blue tit" width="224"> | Blue tit (Blaumeise) | 99.95% |
+| <img src="docs/images/test-predictions/eurasian-jay.jpg" alt="Real test image of a Eurasian jay" width="224"> | Eurasian jay (Eichelhäher) | 99.95% |
+| <img src="docs/images/test-predictions/european-robin.jpg" alt="Real test image of a European robin" width="224"> | European robin (Rotkehlchen) | 99.95% |
+| <img src="docs/images/test-predictions/common-wood-pigeon.jpg" alt="Real test image of a common wood pigeon" width="224"> | Common wood pigeon (Taube) | 99.90% |
 
 ## Train
 
