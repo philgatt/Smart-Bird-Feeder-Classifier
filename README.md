@@ -29,13 +29,18 @@ An extended model additionally predicts rare species using synthetic images: Ams
 The first three models were tested on the **same 426 held-out real feeder-camera
 images**, so their scores are directly comparable.
 
-| Model | Training data | Accuracy on held-out real images | Parameters | Checkpoint size | Meaning |
+| Model | Training images | Test accuracy | Parameters / checkpoint | GitHub |
 | --- | --- | --- | --- | --- |
-| **Real-only ConvNeXt-Tiny** | Real images | **94.8%** | 27.83M | 106.21 MiB | Best accuracy for the established 11 classes, but too large for regular GitHub file hosting. |
-| **Real-only MobileNetV3-Large** | Real images | 91.5% | 4.22M | 16.27 MiB | Smaller deployable alternative; its checkpoint is included in this repository. |
-| Combined ConvNeXt-Tiny | Real and synthetic images | 93.4% | 27.83M | ~106 MiB | Synthetic augmentation did not improve the well-covered classes. |
-| Synthetic-only ConvNeXt-Tiny | Synthetic images | 60.1% | 27.83M | ~106 MiB | Useful for rare-class extension, but not a replacement for real images. |
-| Extended ConvNeXt-Tiny | Real core classes; synthetic common blackbird, European greenfinch, and European goldfinch | No single reliable score yet | 27.83M | ~106 MiB | Those rare classes have only 7, 30, and 5 real test images. |
+| **ConvNeXt-Tiny** | Real core data | **94.8%** | 27.83M / 106.21 MiB | Too large for regular GitHub hosting |
+| **MobileNetV3-Large** | Real core data | 91.5% | 4.22M / 16.27 MiB | Included |
+| ConvNeXt-Tiny | Real + synthetic core data | 93.4% | 27.83M / ~106 MiB | Not included |
+| ConvNeXt-Tiny | Synthetic core data only | 60.1% | 27.83M / ~106 MiB | Not included |
+| Extended ConvNeXt-Tiny | Real core data + 3 synthetic classes | Not reliable yet | 27.83M / ~106 MiB | Not included |
+
+ConvNeXt-Tiny provides the best core-class accuracy. MobileNetV3-Large is 3.3 percentage
+points lower, but its much smaller checkpoint can be stored directly in GitHub. The
+extended model adds common blackbird, European greenfinch, and European goldfinch, but
+their real test sets are currently too small for a reliable headline score.
 
 Synthetic data is used primarily to add rare species. No held-out real test image was
 used to generate the synthetic training data.
