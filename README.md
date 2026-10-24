@@ -60,6 +60,20 @@ is the model's probability for its predicted class.
 | <img src="docs/images/test-predictions/european-robin.jpg" alt="Real test image of a European robin" width="224"> | European robin (Rotkehlchen), 99.95% | European robin (Rotkehlchen), 100.00% |
 | <img src="docs/images/test-predictions/common-wood-pigeon.jpg" alt="Real test image of a common wood pigeon" width="224"> | Common wood pigeon (Taube), 99.90% | Common wood pigeon (Taube), 100.00% |
 
+### Full-dataset prediction summary
+
+The following charts summarize the ConvNeXt-Tiny model's predictions for the complete
+bird-feeder dataset. They are model predictions rather than manually verified counts;
+the model achieved 94.8% accuracy on held-out real images.
+
+<img src="docs/images/detection-report/detections_by_species.png" alt="Horizontal bar chart showing the number of model detections for each bird species" width="100%">
+
+<img src="docs/images/detection-report/detections_by_month.png" alt="Stacked bar chart of predicted bird species by month" width="100%">
+
+<img src="docs/images/detection-report/detections_by_time_of_day.png" alt="Stacked bar chart of predicted bird species by hour of day" width="100%">
+
+<img src="docs/images/detection-report/detections_by_day.png" alt="Stacked bar chart of predicted bird species by day" width="100%">
+
 ## Train
 
 ```powershell
