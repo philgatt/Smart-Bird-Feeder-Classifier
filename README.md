@@ -26,8 +26,8 @@ An extended model additionally predicts rare species using synthetic images: Ams
 
 ## Accuracy
 
-The first three models were tested on the **same 426 held-out real feeder-camera
-images**, so their scores are directly comparable.
+Models tested on the **same 426 held-out real feeder-camera
+images**:
 
 | Model | Training images | Test accuracy | Parameters / checkpoint | GitHub |
 | --- | --- | --- | --- | --- |
