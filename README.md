@@ -45,6 +45,17 @@ their real test sets are currently too small for a reliable headline score.
 Synthetic data is used primarily to add rare species. No held-out real test image was
 used to generate the synthetic training data.
 
+### Synthetic rare-species data
+
+The synthetic images for the three additional classes—Amsel (common blackbird),
+Grünfink (European greenfinch), and Stieglitz (European goldfinch)—were created in
+[ComfyUI](https://www.comfy.org/) with
+[FLUX.2 Klein 4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8).
+The species-specific prompts and ComfyUI workflows are stored alongside the generated
+images in the corresponding [synthetic-bird folders](data/raw/images/labeled/synthetic/).
+They use the shared prompt variations in
+[`configs/synthetic_prompt_additions.json`](configs/synthetic_prompt_additions.json).
+
 The GitHub-hosted MobileNet checkpoint is available at
 [`models/real_only_mobilenet_v3_large.pt`](models/real_only_mobilenet_v3_large.pt).
 
